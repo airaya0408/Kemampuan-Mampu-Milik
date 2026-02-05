@@ -12,6 +12,7 @@ import { analyzeMarketData } from './services/geminiService';
 import { PropertyChatAgent } from './services/chatService';
 
 const App: React.FC = () => {
+  // State definitions first
   const [loading, setLoading] = useState<boolean>(false);
   const [analysis, setAnalysis] = useState<string>('');
   const [errorStatus, setErrorStatus] = useState<'technical' | null>(null);
@@ -27,11 +28,12 @@ const App: React.FC = () => {
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isChatting, setIsChatting] = useState(false);
+  
   const dedicatedAgent = useRef<PropertyChatAgent | null>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
-
   const lastAnalysisKey = useRef<string>('');
 
+  // Memoized lists for filters
   const states = useMemo(() => {
     const s = new Set(RAW_PROPERTY_DATA.map(d => d.negeri));
     return ['Semua Negeri', ...Array.from(s).sort()];
@@ -60,6 +62,12 @@ const App: React.FC = () => {
     }));
   }, [filterState, filterType, filterStatus]);
 
+  const averageMultiple = useMemo(() => {
+    if (filteredData.length === 0) return "0";
+    const total = filteredData.reduce((acc, curr) => acc + curr.medianMultiple, 0);
+    return (total / filteredData.length).toFixed(1);
+  }, [filteredData]);
+
   const fetchAIAnalysis = useCallback(async (customQuery?: string) => {
     const currentKey = `${filterState}-${filterType}-${filterStatus}-${customQuery || 'default'}`;
     if (currentKey === lastAnalysisKey.current && analysis && !errorStatus) return;
@@ -74,7 +82,7 @@ const App: React.FC = () => {
     } catch (err: any) {
       console.error("Analysis Error:", err);
       setErrorStatus("technical");
-      setAnalysis("Maaf, ralat teknikal berlaku semasa menjana analisis AI.");
+      setAnalysis("Maaf, ralat teknikal berlaku semasa menjana analisis AI. Sila semak semula nanti.");
     } finally {
       setLoading(false);
     }
@@ -87,7 +95,7 @@ const App: React.FC = () => {
     const userMsg = chatInput.trim();
     setChatInput('');
     setChatMessages(prev => [...prev, { role: 'user', text: userMsg }]);
-    setIsTyping(true);
+    setIsChatting(true);
 
     if (!dedicatedAgent.current) dedicatedAgent.current = new PropertyChatAgent();
 
@@ -110,11 +118,6 @@ const App: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (activeTab === 'ai-expert' && (!analysis || errorStatus)) fetchAIAnalysis();
-    if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-  }, [activeTab, fetchAIAnalysis, analysis, errorStatus, chatMessages]);
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
@@ -123,14 +126,10 @@ const App: React.FC = () => {
     }
   };
 
-  const averageMultiple = useMemo(() => {
-    if (filteredData.length === 0) return "0";
-    const total = filteredData.reduce((acc, curr) => acc + curr.medianMultiple, 0);
-    return (total / filteredData.length).toFixed(1);
-  }, [filteredData]);
-
-  // Temporary variable fix for isChatting vs setIsTyping confusion in the code
-  const [isTyping, setIsTyping] = useState(false);
+  useEffect(() => {
+    if (activeTab === 'ai-expert' && (!analysis || errorStatus)) fetchAIAnalysis();
+    if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+  }, [activeTab, fetchAIAnalysis, analysis, errorStatus, chatMessages]);
 
   return (
     <div className="h-screen flex flex-col lg:flex-row bg-slate-50 text-slate-900 font-sans overflow-hidden">
@@ -348,7 +347,7 @@ const App: React.FC = () => {
                  </div>
                  <form onSubmit={handleSendDedicatedChat} className="p-6 bg-white border-t border-slate-100 flex gap-4 shrink-0">
                     <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Tanya tentang mana-mana rekod..." className="flex-1 bg-slate-100 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-                    <button type="submit" disabled={isTyping} className="bg-blue-600 text-white p-4 rounded-2xl shadow-xl hover:bg-blue-700 transition-all">
+                    <button type="submit" disabled={isChatting} className="bg-blue-600 text-white p-4 rounded-2xl shadow-xl hover:bg-blue-700 transition-all">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                     </button>
                  </form>
