@@ -16,6 +16,11 @@
         .prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
         .prose th, .prose td { border: 1px solid #e2e8f0; padding: 0.75rem; text-align: left; }
         .prose th { background-color: #f8fafc; }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 <script type="importmap">
 {
@@ -29,10 +34,10 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="bg-slate-50 text-slate-900 overflow-hidden">
     <div id="root"></div>
-<script type="module" src="/index.tsx"></script>
+    <!-- Entry point script -->
+    <script type="module" src="index.tsx"></script>
 </body>
 </html>
