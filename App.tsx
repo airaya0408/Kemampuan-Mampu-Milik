@@ -74,7 +74,7 @@ const App: React.FC = () => {
     } catch (err: any) {
       console.error("Analysis Error:", err);
       setErrorStatus("technical");
-      setAnalysis("Maaf, ralat teknikal berlaku semasa menjana analisis AI. Sila semak sambungan internet anda.");
+      setAnalysis("Maaf, ralat teknikal berlaku semasa menjana analisis AI.");
     } finally {
       setLoading(false);
     }
@@ -87,7 +87,7 @@ const App: React.FC = () => {
     const userMsg = chatInput.trim();
     setChatInput('');
     setChatMessages(prev => [...prev, { role: 'user', text: userMsg }]);
-    setIsChatting(true);
+    setIsTyping(true);
 
     if (!dedicatedAgent.current) dedicatedAgent.current = new PropertyChatAgent();
 
@@ -128,6 +128,9 @@ const App: React.FC = () => {
     const total = filteredData.reduce((acc, curr) => acc + curr.medianMultiple, 0);
     return (total / filteredData.length).toFixed(1);
   }, [filteredData]);
+
+  // Temporary variable fix for isChatting vs setIsTyping confusion in the code
+  const [isTyping, setIsTyping] = useState(false);
 
   return (
     <div className="h-screen flex flex-col lg:flex-row bg-slate-50 text-slate-900 font-sans overflow-hidden">
@@ -218,14 +221,6 @@ const App: React.FC = () => {
                 <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
                     <h3 className="text-lg font-bold italic text-slate-800">Visualisasi Jurang Kemampuan (Top 50 Terpilih)</h3>
-                    <div className="flex gap-4">
-                      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase">
-                        <span className="w-3 h-3 bg-red-500 rounded-full"></span> Melebihi Bajet
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase">
-                        <span className="w-3 h-3 bg-green-500 rounded-full"></span> Dalam Bajet
-                      </div>
-                    </div>
                   </div>
                   <div className="h-[400px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -233,7 +228,7 @@ const App: React.FC = () => {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         <XAxis dataKey="chartLabel" hide />
                         <YAxis fontSize={10} stroke="#94a3b8" tickFormatter={(val) => `RM ${val / 1000}k`} />
-                        <Tooltip contentStyle={{ borderRadius: '15px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }} />
+                        <Tooltip contentStyle={{ borderRadius: '15px' }} />
                         <Bar dataKey="bezaHarga" radius={[4, 4, 0, 0]}>
                           {filteredData.slice(0, 50).map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.bezaHarga < 0 ? '#ef4444' : '#22c55e'} />
@@ -245,18 +240,14 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="space-y-6">
-                   <h3 className="text-xl font-black text-slate-800 flex items-center gap-3">
-                     <span className="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-xs">01</span>
-                     Senarai Terperinci ({filteredData.length} Keputusan)
-                   </h3>
+                   <h3 className="text-xl font-black text-slate-800">Senarai Terperinci ({filteredData.length} Keputusan)</h3>
                    {filteredData.length > 0 ? (
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                        {filteredData.map((d, i) => <PropertyCard key={i} data={d} />)}
                      </div>
                    ) : (
-                     <div className="py-20 bg-white border border-dashed border-slate-300 rounded-[3rem] flex flex-col items-center justify-center text-center">
-                        <svg className="w-12 h-12 text-slate-200 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Tiada data untuk gabungan penapis ini.</p>
+                     <div className="py-20 bg-white border border-dashed border-slate-300 rounded-[3rem] flex flex-col items-center justify-center text-center text-slate-400">
+                        <p>Tiada data untuk gabungan penapis ini.</p>
                      </div>
                    )}
                 </div>
@@ -264,13 +255,10 @@ const App: React.FC = () => {
             )}
 
             {activeTab === 'data-table' && (
-              <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden">
                 <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 sticky top-0 z-10 backdrop-blur-sm">
                   <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter italic">Pangkalan Data Nasional 2024</h3>
-                  <div className="flex gap-2">
-                    <span className="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-xs font-bold">Total: {filteredData.length} Rekod</span>
-                    <button onClick={() => window.print()} className="bg-white border border-slate-200 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-slate-50 transition-colors shadow-sm">Ekspor PDF</button>
-                  </div>
+                  <span className="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-xs font-bold">Total: {filteredData.length} Rekod</span>
                 </div>
                 <div className="overflow-x-auto max-h-[700px]">
                   <table className="w-full text-left border-collapse">
@@ -307,14 +295,13 @@ const App: React.FC = () => {
             )}
 
             {activeTab === 'deep-dive' && (
-              <div className="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm h-[650px] animate-in fade-in zoom-in-95 duration-500">
+              <div className="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm h-[650px]">
                 <h3 className="text-2xl font-black text-slate-800 mb-8 text-center uppercase tracking-tighter italic">Matriks Sebaran 145 Rekod: Harga vs Multiple</h3>
                 <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                     <XAxis type="number" dataKey="medianHarga" name="Harga" unit="RM" fontSize={10} tickFormatter={(v) => `${v/1000}k`} />
                     <YAxis type="number" dataKey="medianMultiple" name="Indeks" unit="x" fontSize={10} />
-                    <ZAxis type="number" range={[100, 1000]} dataKey="absBezaHarga" />
                     <Tooltip cursor={{ strokeDasharray: '3 3' }} />
                     <Scatter name="Lokasi" data={filteredData}>
                       {filteredData.map((entry, index) => (
@@ -329,12 +316,11 @@ const App: React.FC = () => {
             {activeTab === 'ai-expert' && (
               <div className="max-w-4xl mx-auto bg-white p-12 rounded-[3rem] border border-slate-200 shadow-2xl min-h-[500px]">
                 {loading ? (
-                  <div className="py-24 flex flex-col items-center gap-6 text-center">
-                    <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs animate-pulse">Menghadam 145 Rekod Nasional...</p>
+                  <div className="py-24 flex flex-col items-center gap-6 text-center text-slate-400">
+                    <p>Menghadam 145 Rekod Nasional...</p>
                   </div>
                 ) : (
-                  <article className="prose prose-slate max-w-none prose-table:shadow-sm prose-table:rounded-xl overflow-hidden">
+                  <article className="prose prose-slate max-w-none">
                     <ReactMarkdown>{analysis}</ReactMarkdown>
                   </article>
                 )}
@@ -343,37 +329,26 @@ const App: React.FC = () => {
 
             {activeTab === 'ai-agent' && (
               <div className="max-w-4xl mx-auto h-[650px] flex flex-col bg-white rounded-[3rem] border border-slate-200 shadow-2xl overflow-hidden">
-                 <div className="bg-slate-900 p-8 flex items-center gap-4 shrink-0">
-                    <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/20">A</div>
+                 <div className="bg-slate-900 p-8 flex items-center gap-4 shrink-0 text-white">
+                    <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-bold">A</div>
                     <div>
-                      <h3 className="text-white font-bold italic text-lg">Terminal Sembang Hartanah Nasional</h3>
-                      <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
-                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                        Enjin Data 145 Rekod Aktif
-                      </p>
+                      <h3 className="font-bold italic text-lg">Terminal Sembang Hartanah Nasional</h3>
                     </div>
                  </div>
                  <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-8 space-y-6 bg-slate-50/50">
                     {chatMessages.map((msg, idx) => (
                       <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[85%] p-5 rounded-[2rem] shadow-sm ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'}`}>
-                          <ReactMarkdown className="prose prose-sm max-w-none text-inherit leading-relaxed">{msg.text}</ReactMarkdown>
+                          <div className="prose prose-sm max-w-none text-inherit leading-relaxed">
+                            <ReactMarkdown>{msg.text}</ReactMarkdown>
+                          </div>
                         </div>
                       </div>
                     ))}
-                    {isChatting && !chatMessages[chatMessages.length - 1].text && (
-                       <div className="flex justify-start">
-                          <div className="bg-white border border-slate-200 p-4 rounded-full flex gap-1 animate-pulse">
-                            <div className="w-2 h-2 bg-slate-200 rounded-full"></div>
-                            <div className="w-2 h-2 bg-slate-200 rounded-full"></div>
-                            <div className="w-2 h-2 bg-slate-200 rounded-full"></div>
-                          </div>
-                       </div>
-                    )}
                  </div>
                  <form onSubmit={handleSendDedicatedChat} className="p-6 bg-white border-t border-slate-100 flex gap-4 shrink-0">
-                    <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Tanya tentang mana-mana rekod spesifik dari 145 entri..." className="flex-1 bg-slate-100 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-inner" />
-                    <button type="submit" disabled={isChatting} className="bg-blue-600 text-white p-4 rounded-2xl shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all disabled:opacity-50 active:scale-95">
+                    <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Tanya tentang mana-mana rekod..." className="flex-1 bg-slate-100 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <button type="submit" disabled={isTyping} className="bg-blue-600 text-white p-4 rounded-2xl shadow-xl hover:bg-blue-700 transition-all">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                     </button>
                  </form>
